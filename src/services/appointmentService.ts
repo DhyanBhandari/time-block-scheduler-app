@@ -1,4 +1,3 @@
-
 // Enhanced backend service with proper date validation and all requested features
 export interface TimeSlot {
   id: string;
@@ -84,51 +83,55 @@ class AppointmentService {
     const now = new Date();
     
     console.log('🕐 Current time:', now.toLocaleString());
+    console.log('🕐 Current date string:', now.toISOString().split('T')[0]);
     
-    // Generate slots for current week and next week
-    for (let weekOffset = 0; weekOffset < 2; weekOffset++) {
-      const startDate = this.getStartOfWeek();
-      startDate.setDate(startDate.getDate() + (weekOffset * 7));
+    // Generate slots for next 14 days (2 weeks) starting from today
+    for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+      const currentDate = new Date(now);
+      currentDate.setDate(now.getDate() + dayOffset);
+      
+      // Skip weekends (Saturday = 6, Sunday = 0)
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        console.log('⏭️ Skipping weekend:', currentDate.toDateString());
+        continue;
+      }
+      
+      console.log('📅 Generating slots for:', currentDate.toDateString());
       
       // Generate M-F, 9 AM - 5 PM, 30-min intervals
-      for (let day = 0; day < 5; day++) {
-        const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + day);
-        
-        // Only skip completely past dates (not today)
-        if (currentDate.toDateString() < now.toDateString()) {
-          console.log('⏭️ Skipping past date:', currentDate.toDateString());
-          continue;
-        }
-        
-        for (let hour = 9; hour < 17; hour++) {
-          for (let minute = 0; minute < 60; minute += 30) {
-            const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            const slotDateTime = new Date(currentDate);
-            slotDateTime.setHours(hour, minute, 0, 0);
-            
-            // For today, check if the time slot has already passed
-            const isToday = currentDate.toDateString() === now.toDateString();
-            const isPastTime = isToday && slotDateTime <= now;
-            
-            if (isPastTime) {
-              console.log('⏰ Past time slot:', time, 'on', currentDate.toDateString());
-            }
-            
-            slots.push({
-              id: `${currentDate.toISOString().split('T')[0]}-${time}`,
-              date: currentDate.toISOString().split('T')[0],
-              time,
-              available: !isPastTime // Mark past times as unavailable
-            });
+      for (let hour = 9; hour < 17; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          const slotDateTime = new Date(currentDate);
+          slotDateTime.setHours(hour, minute, 0, 0);
+          
+          // For today, check if the time slot has already passed
+          const isToday = currentDate.toDateString() === now.toDateString();
+          const isPastTime = isToday && slotDateTime <= now;
+          
+          if (isPastTime) {
+            console.log('⏰ Past time slot:', time, 'on', currentDate.toDateString());
           }
+          
+          slots.push({
+            id: `${currentDate.toISOString().split('T')[0]}-${time}`,
+            date: currentDate.toISOString().split('T')[0],
+            time,
+            available: !isPastTime // Mark past times as unavailable
+          });
         }
       }
     }
     
     this.slots = slots;
-    console.log(`🗓️ Generated ${slots.length} time slots (including today)`);
-    console.log(`📅 Today's slots:`, slots.filter(s => s.date === now.toISOString().split('T')[0]).length);
+    console.log(`🗓️ Generated ${slots.length} time slots total`);
+    
+    // Count today's slots
+    const todayString = now.toISOString().split('T')[0];
+    const todaySlots = slots.filter(s => s.date === todayString);
+    console.log(`📅 Today's slots (${todayString}):`, todaySlots.length);
+    console.log(`📅 Available today:`, todaySlots.filter(s => s.available).length);
   }
 
   private isSameDay(date1: Date, date2: Date): boolean {
