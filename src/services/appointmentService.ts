@@ -81,9 +81,11 @@ class AppointmentService {
 
   private generateWeeklySlots() {
     const slots: TimeSlot[] = [];
-    const today = new Date();
+    const now = new Date();
     
-    // Generate slots for current week and next week to avoid past dates
+    console.log('🕐 Current time:', now.toLocaleString());
+    
+    // Generate slots for current week and next week
     for (let weekOffset = 0; weekOffset < 2; weekOffset++) {
       const startDate = this.getStartOfWeek();
       startDate.setDate(startDate.getDate() + (weekOffset * 7));
@@ -93,29 +95,31 @@ class AppointmentService {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + day);
         
-        // Skip past dates
-        if (currentDate < today && !this.isSameDay(currentDate, today)) {
+        // Only skip completely past dates (not today)
+        if (currentDate.toDateString() < now.toDateString()) {
+          console.log('⏭️ Skipping past date:', currentDate.toDateString());
           continue;
         }
         
         for (let hour = 9; hour < 17; hour++) {
           for (let minute = 0; minute < 60; minute += 30) {
             const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const slotDateTime = new Date(currentDate);
+            slotDateTime.setHours(hour, minute, 0, 0);
             
-            // Skip past times for today
-            if (this.isSameDay(currentDate, today)) {
-              const slotDateTime = new Date(currentDate);
-              slotDateTime.setHours(hour, minute, 0, 0);
-              if (slotDateTime <= today) {
-                continue;
-              }
+            // For today, check if the time slot has already passed
+            const isToday = currentDate.toDateString() === now.toDateString();
+            const isPastTime = isToday && slotDateTime <= now;
+            
+            if (isPastTime) {
+              console.log('⏰ Past time slot:', time, 'on', currentDate.toDateString());
             }
             
             slots.push({
               id: `${currentDate.toISOString().split('T')[0]}-${time}`,
               date: currentDate.toISOString().split('T')[0],
               time,
-              available: true
+              available: !isPastTime // Mark past times as unavailable
             });
           }
         }
@@ -123,7 +127,8 @@ class AppointmentService {
     }
     
     this.slots = slots;
-    console.log(`🗓️ Generated ${slots.length} future time slots`);
+    console.log(`🗓️ Generated ${slots.length} time slots (including today)`);
+    console.log(`📅 Today's slots:`, slots.filter(s => s.date === now.toISOString().split('T')[0]).length);
   }
 
   private isSameDay(date1: Date, date2: Date): boolean {
@@ -160,7 +165,7 @@ class AppointmentService {
       
       const availableSlots = this.slots.map(slot => ({
         ...slot,
-        available: !bookedSlotIds.includes(slot.id) && !blockedSlotIds.has(slot.id)
+        available: slot.available && !bookedSlotIds.includes(slot.id) && !blockedSlotIds.has(slot.id)
       }));
 
       return {

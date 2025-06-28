@@ -26,10 +26,14 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    
     return {
       dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
       dayNumber: date.getDate(),
-      month: date.toLocaleDateString('en-US', { month: 'short' })
+      month: date.toLocaleDateString('en-US', { month: 'short' }),
+      isToday
     };
   };
 
@@ -61,15 +65,17 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
       {Object.entries(groupedSlots).map(([date, daySlots]) => {
-        const { dayName, dayNumber, month } = formatDate(date);
+        const { dayName, dayNumber, month, isToday } = formatDate(date);
         
         return (
           <div key={date} className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+            <div className={`p-4 border-b border-gray-100 ${isToday ? 'bg-gradient-to-r from-green-50 to-blue-50' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
               <div className="flex items-center justify-center space-x-2">
-                <Calendar className="w-4 h-4 text-blue-600" />
+                <Calendar className={`w-4 h-4 ${isToday ? 'text-green-600' : 'text-blue-600'}`} />
                 <div className="text-center">
-                  <div className="font-semibold text-gray-900">{dayName}</div>
+                  <div className={`font-semibold ${isToday ? 'text-green-900' : 'text-gray-900'}`}>
+                    {dayName} {isToday && '(Today)'}
+                  </div>
                   <div className="text-sm text-gray-600">{month} {dayNumber}</div>
                 </div>
               </div>
@@ -83,13 +89,17 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({
                   disabled={!slot.available}
                   className={`w-full p-2 text-sm rounded-lg transition-all duration-200 ${
                     !slot.available
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
                       : selectedSlot === slot.id
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md transform scale-105'
                       : 'bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-transparent hover:border-blue-200'
                   }`}
+                  title={!slot.available ? 'This time slot is not available' : 'Click to select this time slot'}
                 >
                   {formatTime(slot.time)}
+                  {!slot.available && isToday && (
+                    <span className="block text-xs text-gray-400 mt-1">Past</span>
+                  )}
                 </button>
               ))}
             </div>
