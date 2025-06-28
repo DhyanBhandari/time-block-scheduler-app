@@ -1,4 +1,3 @@
-
 // Mock backend service to simulate API calls
 export interface TimeSlot {
   id: string;
@@ -19,9 +18,19 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface AvailabilityRule {
+  id: string;
+  date: string;
+  timeSlots: string[];
+  isBlocked: boolean;
+  reason?: string;
+  createdAt: string;
+}
+
 class AppointmentService {
   private bookings: Booking[] = [];
   private slots: TimeSlot[] = [];
+  private availabilityRules: AvailabilityRule[] = [];
 
   constructor() {
     this.generateWeeklySlots();
@@ -67,9 +76,20 @@ class AppointmentService {
       .filter(booking => booking.status !== 'denied')
       .map(booking => booking.slotId);
     
+    // Apply availability rules
+    const blockedSlotIds = new Set<string>();
+    this.availabilityRules
+      .filter(rule => rule.isBlocked)
+      .forEach(rule => {
+        rule.timeSlots.forEach(time => {
+          const slotId = `${rule.date}-${time}`;
+          blockedSlotIds.add(slotId);
+        });
+      });
+    
     return this.slots.map(slot => ({
       ...slot,
-      available: !bookedSlotIds.includes(slot.id)
+      available: !bookedSlotIds.includes(slot.id) && !blockedSlotIds.has(slot.id)
     }));
   }
 
@@ -174,6 +194,58 @@ class AppointmentService {
 
     console.log('CSV Export generated');
     return csvContent;
+  }
+
+  // New availability management methods
+  async setAvailability(data: {
+    date: string;
+    timeSlots: string[];
+    isBlocked: boolean;
+    reason?: string;
+  }): Promise<{ success: boolean; rule?: AvailabilityRule; error?: string }> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Remove existing rule for the same date
+    this.availabilityRules = this.availabilityRules.filter(rule => rule.date !== data.date);
+
+    const rule: AvailabilityRule = {
+      id: `rule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      date: data.date,
+      timeSlots: data.timeSlots,
+      isBlocked: data.isBlocked,
+      reason: data.reason,
+      createdAt: new Date().toISOString()
+    };
+
+    this.availabilityRules.push(rule);
+    console.log('Availability rule created:', rule);
+    
+    return { success: true, rule };
+  }
+
+  async getAvailabilityRules(): Promise<AvailabilityRule[]> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return [...this.availabilityRules].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }
+
+  async deleteAvailabilityRule(ruleId: string): Promise<{ success: boolean; error?: string }> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const ruleIndex = this.availabilityRules.findIndex(rule => rule.id === ruleId);
+    if (ruleIndex === -1) {
+      return { success: false, error: 'Availability rule not found' };
+    }
+
+    this.availabilityRules.splice(ruleIndex, 1);
+    console.log('Availability rule deleted:', ruleId);
+    
+    return { success: true };
   }
 }
 

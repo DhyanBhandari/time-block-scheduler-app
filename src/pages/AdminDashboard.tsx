@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, CheckCircle, XCircle, AlertCircle, Download, Filter } from 'lucide-react';
+import { Users, Calendar, CheckCircle, XCircle, AlertCircle, Download, Filter, Settings } from 'lucide-react';
 import BookingsList from '../components/BookingsList';
+import AvailabilityManager from '../components/AvailabilityManager';
 import { appointmentService, Booking } from '../services/appointmentService';
 import { useToast } from '../hooks/use-toast';
 
@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'availability'>('bookings');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,97 +115,133 @@ const AdminDashboard = () => {
             <Users className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Admin Dashboard</h1>
-          <p className="text-xl text-gray-600">Manage customer appointments and bookings</p>
+          <p className="text-xl text-gray-600">Manage customer appointments and availability</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                <p className="text-2xl font-bold text-gray-900">{bookings.length}</p>
-              </div>
-              <Calendar className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{getStatusCount('pending')}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-yellow-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{getStatusCount('approved')}</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Denied</p>
-                <p className="text-2xl font-bold text-red-600">{getStatusCount('denied')}</p>
-              </div>
-              <XCircle className="w-8 h-8 text-red-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <Filter className="w-5 h-5 text-gray-600" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Bookings</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="denied">Denied</option>
-              </select>
-            </div>
-
+        {/* Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-1">
             <button
-              onClick={handleExportCSV}
-              disabled={bookings.length === 0}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setActiveTab('bookings')}
+              className={`px-6 py-3 rounded-lg transition-all duration-200 ${
+                activeTab === 'bookings'
+                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-purple-600'
+              }`}
             >
-              <Download className="w-4 h-4" />
-              <span>Export CSV</span>
+              <Calendar className="w-4 h-4 inline mr-2" />
+              Bookings Management
+            </button>
+            <button
+              onClick={() => setActiveTab('availability')}
+              className={`px-6 py-3 rounded-lg transition-all duration-200 ${
+                activeTab === 'availability'
+                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-purple-600'
+              }`}
+            >
+              <Settings className="w-4 h-4 inline mr-2" />
+              Availability Settings
             </button>
           </div>
         </div>
 
-        {/* Bookings List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {statusFilter === 'all' ? 'All Bookings' : `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Bookings`}
-            </h2>
-            <span className="text-sm text-gray-500">
-              Showing {filteredBookings.length} of {bookings.length} bookings
-            </span>
-          </div>
+        {activeTab === 'bookings' ? (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                    <p className="text-2xl font-bold text-gray-900">{bookings.length}</p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-blue-500" />
+                </div>
+              </div>
 
-          <BookingsList
-            bookings={filteredBookings}
-            onUpdateStatus={handleStatusUpdate}
-            loading={loading || updateLoading}
-          />
-        </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-600">{getStatusCount('pending')}</p>
+                  </div>
+                  <AlertCircle className="w-8 h-8 text-yellow-500" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Approved</p>
+                    <p className="text-2xl font-bold text-green-600">{getStatusCount('approved')}</p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Denied</p>
+                    <p className="text-2xl font-bold text-red-600">{getStatusCount('denied')}</p>
+                  </div>
+                  <XCircle className="w-8 h-8 text-red-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                <div className="flex items-center space-x-4">
+                  <Filter className="w-5 h-5 text-gray-600" />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">All Bookings</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="denied">Denied</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={handleExportCSV}
+                  disabled={bookings.length === 0}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bookings List */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {statusFilter === 'all' ? 'All Bookings' : `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Bookings`}
+                </h2>
+                <span className="text-sm text-gray-500">
+                  Showing {filteredBookings.length} of {bookings.length} bookings
+                </span>
+              </div>
+
+              <BookingsList
+                bookings={filteredBookings}
+                onUpdateStatus={handleStatusUpdate}
+                loading={loading || updateLoading}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <AvailabilityManager />
+          </div>
+        )}
 
         {/* Live Updates Indicator */}
         <div className="fixed bottom-4 right-4">
