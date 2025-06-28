@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Plus, Trash2, Save, X } from 'lucide-react';
 import { appointmentService, AvailabilityRule } from '../services/appointmentService';
@@ -29,8 +28,16 @@ const AvailabilityManager = () => {
   const loadRules = async () => {
     try {
       setLoading(true);
-      const availabilityRules = await appointmentService.getAvailabilityRules();
-      setRules(availabilityRules);
+      const response = await appointmentService.getAvailabilityRules();
+      if (response.success && response.data) {
+        setRules(response.data);
+      } else {
+        toast({
+          title: "Error",
+          description: response.error?.message || "Failed to load availability rules",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -88,7 +95,7 @@ const AvailabilityManager = () => {
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to set availability",
+          description: typeof result.error === 'string' ? result.error : result.error?.message || "Failed to set availability",
           variant: "destructive",
         });
       }
@@ -114,7 +121,7 @@ const AvailabilityManager = () => {
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to delete rule",
+          description: typeof result.error === 'string' ? result.error : result.error?.message || "Failed to delete rule",
           variant: "destructive",
         });
       }
