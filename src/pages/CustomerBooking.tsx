@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import TimeSlotGrid from '../components/TimeSlotGrid';
 import BookingForm from '../components/BookingForm';
 import { appointmentService, TimeSlot } from '../services/appointmentService';
@@ -16,13 +16,29 @@ const CustomerBooking = () => {
 
   useEffect(() => {
     loadSlots();
+    
+    // Live Updates: Polling every 30 seconds for fresh data
+    const interval = setInterval(() => {
+      loadSlots();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadSlots = async () => {
     try {
       setLoading(true);
-      const availableSlots = await appointmentService.getAvailableSlots();
-      setSlots(availableSlots);
+      const response = await appointmentService.getAvailableSlots();
+      
+      if (response.success && response.data) {
+        setSlots(response.data);
+      } else {
+        toast({
+          title: "Error",
+          description: response.error?.message || "Failed to load available time slots",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -44,12 +60,12 @@ const CustomerBooking = () => {
 
     try {
       setBookingLoading(true);
-      const result = await appointmentService.createBooking({
+      const response = await appointmentService.createBooking({
         slotId: selectedSlot,
         ...data
       });
 
-      if (result.success) {
+      if (response.success && response.data) {
         toast({
           title: "Booking Successful!",
           description: "Your appointment has been booked and is pending approval.",
@@ -58,9 +74,18 @@ const CustomerBooking = () => {
         setSelectedSlot(null);
         await loadSlots(); // Refresh slots
       } else {
+        // Handle specific error codes
+        let errorMessage = response.error?.message || "Failed to book appointment";
+        
+        if (response.error?.code === 400) {
+          errorMessage = response.error.message;
+        } else if (response.error?.code === 409) {
+          errorMessage = "This time slot has just been booked by someone else. Please select another slot.";
+        }
+        
         toast({
           title: "Booking Failed",
-          description: result.error || "Failed to book appointment",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -82,6 +107,7 @@ const CustomerBooking = () => {
 
   const selectedSlotData = selectedSlot ? slots.find(slot => slot.id === selectedSlot) : null;
   const availableSlots = slots.filter(slot => slot.available);
+  const currentDate = new Date().toLocaleDateString();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -92,8 +118,8 @@ const CustomerBooking = () => {
             <Calendar className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Book Your Appointment</h1>
-          <p className="text-xl text-gray-600 mb-2">Choose from available time slots this week</p>
-          <div className="inline-flex items-center space-x-4 text-sm text-gray-500">
+          <p className="text-xl text-gray-600 mb-2">Choose from available time slots (only future dates shown)</p>
+          <div className="inline-flex items-center space-x-6 text-sm text-gray-500">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
               Available
@@ -101,6 +127,10 @@ const CustomerBooking = () => {
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gray-300 rounded-full mr-2"></div>
               Booked
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-2 text-blue-500" />
+              Today: {currentDate}
             </div>
           </div>
         </div>
@@ -120,7 +150,7 @@ const CustomerBooking = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Slots</p>
+                <p className="text-sm font-medium text-gray-600">Total Future Slots</p>
                 <p className="text-2xl font-bold text-blue-600">{slots.length}</p>
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
@@ -158,7 +188,16 @@ const CustomerBooking = () => {
               <p>2. Fill in your details and reason for appointment</p>
               <p>3. Submit your booking request for admin approval</p>
               <p>4. You'll receive confirmation once approved</p>
+              <p className="font-medium">⚠️ Note: Past dates and times are automatically filtered out</p>
             </div>
+          </div>
+        </div>
+
+        {/* Live Updates Indicator */}
+        <div className="fixed bottom-4 left-4">
+          <div className="bg-green-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span className="text-sm">Auto-refresh every 30s</span>
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadBookings();
     
-    // Set up polling for live updates every 10 seconds
+    // Live Updates: Polling every 10 seconds for real-time updates
     const interval = setInterval(loadBookings, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -34,8 +34,17 @@ const AdminDashboard = () => {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const allBookings = await appointmentService.getAllBookings();
-      setBookings(allBookings);
+      const response = await appointmentService.getAllBookings();
+      
+      if (response.success && response.data) {
+        setBookings(response.data);
+      } else {
+        toast({
+          title: "Error",
+          description: response.error?.message || "Failed to load bookings",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -50,18 +59,18 @@ const AdminDashboard = () => {
   const handleStatusUpdate = async (bookingId: string, status: 'approved' | 'denied') => {
     try {
       setUpdateLoading(true);
-      const result = await appointmentService.updateBookingStatus(bookingId, status);
+      const response = await appointmentService.updateBookingStatus(bookingId, status);
       
-      if (result.success) {
+      if (response.success && response.data) {
         toast({
           title: "Status Updated",
-          description: `Booking has been ${status}`,
+          description: `Booking has been ${status}${status === 'approved' ? ' - Calendar invite sent!' : ''}`,
         });
         await loadBookings(); // Refresh bookings
       } else {
         toast({
           title: "Update Failed",
-          description: result.error || "Failed to update booking status",
+          description: response.error?.message || "Failed to update booking status",
           variant: "destructive",
         });
       }
@@ -76,14 +85,15 @@ const AdminDashboard = () => {
     }
   };
 
+  // Enhanced CSV Export with better error handling
   const handleExportCSV = async () => {
     try {
       const csvContent = await appointmentService.exportBookingsCSV();
-      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `appointment-bookings-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -91,12 +101,12 @@ const AdminDashboard = () => {
       
       toast({
         title: "Export Successful",
-        description: "Bookings have been exported to CSV",
+        description: `${bookings.length} bookings exported to CSV`,
       });
     } catch (error) {
       toast({
         title: "Export Failed",
-        description: "Failed to export bookings",
+        description: "Failed to export bookings to CSV",
         variant: "destructive",
       });
     }
@@ -214,7 +224,7 @@ const AdminDashboard = () => {
                   className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Export CSV</span>
+                  <span>Export CSV ({bookings.length} bookings)</span>
                 </button>
               </div>
             </div>
