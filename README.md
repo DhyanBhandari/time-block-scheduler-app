@@ -1,73 +1,191 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🚀 Appointment Booking System
 
-**URL**: https://lovable.dev/projects/a689b49f-de5b-4cd5-951d-88c081215362
+A modern, full-featured appointment booking application built with React, TypeScript, and Tailwind CSS. This system provides both customer-facing booking functionality and an admin dashboard for managing appointments.
 
-## How can I edit this code?
+## ✨ Features
 
-There are several ways of editing your application.
+### Customer Side
+- 📅 View available time slots for the current week (Monday-Friday, 9 AM-5 PM)
+- ⏰ 30-minute appointment intervals
+- 📝 Easy booking form with name, email, and reason
+- ✅ Real-time slot availability updates
+- 🚫 Prevents double-booking with clear error messages
 
-**Use Lovable**
+### Admin Dashboard
+- 👥 View all customer bookings with detailed information
+- ⏳ Manage booking status (Pending → Approved/Denied)
+- 🔍 Filter bookings by status (All, Pending, Approved, Denied)
+- 📊 Live statistics dashboard
+- 📄 Export bookings to CSV format
+- 🔄 Real-time updates (polling every 10 seconds)
+- 📧 Simulated calendar invite notifications
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a689b49f-de5b-4cd5-951d-88c081215362) and start prompting.
+## 🛠️ Technologies Used
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Icons**: Lucide React
+- **Routing**: React Router v6
+- **State Management**: React Hooks
+- **UI Components**: Custom components with shadcn/ui integration
+- **Notifications**: Toast notifications
+- **Styling**: Tailwind CSS with custom gradients and animations
 
-**Use your preferred IDE**
+## 🏗️ Architecture
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Project Structure
+```
+src/
+├── components/          # Reusable UI components
+│   ├── Navigation.tsx   # App navigation bar
+│   ├── TimeSlotGrid.tsx # Calendar-style time slot display
+│   ├── BookingForm.tsx  # Customer booking form modal
+│   └── BookingsList.tsx # Admin bookings management
+├── pages/              # Main application pages
+│   ├── CustomerBooking.tsx # Customer booking interface
+│   └── AdminDashboard.tsx  # Admin management dashboard
+├── services/           # Business logic and data management
+│   └── appointmentService.ts # Mock backend service
+└── hooks/             # Custom React hooks
+    └── use-toast.ts   # Toast notification hook
 ```
 
-**Edit a file directly in GitHub**
+### Data Flow
+1. **appointmentService.ts** simulates a backend API with in-memory data storage
+2. Components communicate through service methods
+3. Real-time updates achieved through polling
+4. State management handled with React hooks
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🚀 Getting Started
 
-**Use GitHub Codespaces**
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Installation & Setup
 
-## What technologies are used for this project?
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd appointment-booking-system
+   ```
 
-This project is built with:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
 
-## How can I deploy this project?
+4. **Open your browser**
+   Navigate to `http://localhost:8080`
 
-Simply open [Lovable](https://lovable.dev/projects/a689b49f-de5b-4cd5-951d-88c081215362) and click on Share -> Publish.
+## 📖 Usage Guide
 
-## Can I connect a custom domain to my Lovable project?
+### For Customers
+1. Visit the home page to see available time slots
+2. Click on any available (green) time slot
+3. Fill in your details in the booking form:
+   - Full name
+   - Email address
+   - Reason for appointment
+4. Submit your booking request
+5. Your appointment will be marked as "Pending" until admin approval
 
-Yes, you can!
+### For Admins
+1. Navigate to `/admin` or click "Admin Dashboard" in the navigation
+2. View all bookings with status indicators
+3. Use the filter dropdown to view specific booking statuses
+4. Approve or deny pending bookings using the action buttons
+5. Export all bookings to CSV using the "Export CSV" button
+6. Monitor live statistics in the dashboard cards
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔧 API Simulation
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The application uses a mock service (`appointmentService.ts`) that simulates these REST endpoints:
+
+- `GET /slots` - Retrieve available time slots
+- `POST /bookings` - Create new booking
+- `GET /bookings` - Get all bookings
+- `PATCH /bookings/:id` - Update booking status
+
+### Error Handling
+- **400**: Missing required information
+- **409**: Time slot already booked
+- **404**: Invalid booking ID
+- **Validation**: Email format, required fields
+
+## 🎨 Design Features
+
+- **Modern UI**: Clean, professional design with gradient backgrounds
+- **Responsive**: Fully responsive design works on all devices
+- **Interactive**: Smooth hover effects and transitions
+- **Accessible**: Proper contrast ratios and semantic HTML
+- **Visual Feedback**: Toast notifications and loading states
+- **Status Indicators**: Color-coded booking statuses
+
+## 🔄 Real-time Features
+
+- **Live Updates**: Admin dashboard polls for new bookings every 10 seconds
+- **Instant Feedback**: Immediate UI updates after actions
+- **Status Synchronization**: Real-time booking status changes
+- **Calendar Simulation**: Console logs simulate email/calendar invites
+
+## 📊 Data Management
+
+### Time Slot Generation
+- Automatically generates weekly slots (Monday-Friday)
+- 9 AM to 5 PM time range
+- 30-minute intervals
+- Smart availability tracking
+
+### Booking Management
+- Unique booking IDs
+- Timestamp tracking
+- Status workflow: Pending → Approved/Denied
+- Conflict prevention
+
+## 🚀 Deployment
+
+This is a client-side application that can be deployed to any static hosting service:
+
+1. **Build the application**
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy the `dist` folder** to your hosting service of choice:
+   - Netlify
+   - Vercel
+   - GitHub Pages
+   - Any static hosting provider
+
+## 🔮 Future Enhancements
+
+- **Real Backend**: Replace mock service with actual REST API
+- **Authentication**: Add user authentication and authorization
+- **Email Integration**: Real email notifications and calendar invites
+- **Multiple Services**: Support for different appointment types
+- **Recurring Appointments**: Support for recurring bookings
+- **Calendar Integration**: Direct calendar sync
+- **Payment Integration**: Add payment processing for paid services
+- **Mobile App**: React Native mobile application
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+**Built with ❤️ using React, TypeScript, and Tailwind CSS**
